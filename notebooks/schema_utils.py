@@ -4,27 +4,27 @@ from typing import Any, Optional
 from utils import chat
 
 NODE_PROPERTIES_QUERY = """
-CALL apoc.meta.data()
-YIELD label, other, elementType, type, property
-WHERE NOT type = "RELATIONSHIP" AND elementType = "node"
-WITH label AS nodeLabels, collect({property:property, type:type}) AS properties
-RETURN {labels: nodeLabels, properties: properties} AS output
+CALL db.schema.nodeTypeProperties()
+YIELD nodeType, nodeLabels, propertyName, propertyTypes
+WITH nodeLabels[0] AS label, collect({property: propertyName, type: propertyTypes[0]}) AS properties
+RETURN {labels: label, properties: properties} AS output
 """
 
 REL_PROPERTIES_QUERY = """
-CALL apoc.meta.data()
-YIELD label, other, elementType, type, property
-WHERE NOT type = "RELATIONSHIP" AND elementType = "relationship"
-WITH label AS relType, collect({property:property, type:type}) AS properties
+CALL db.schema.relTypeProperties()
+YIELD relType, propertyName, propertyTypes
+WITH relType, collect({property: propertyName, type: propertyTypes[0]}) AS properties
 RETURN {type: relType, properties: properties} AS output
 """
 
 REL_QUERY = """
-CALL apoc.meta.data()
-YIELD label, other, elementType, type, property
-WHERE type = "RELATIONSHIP" AND elementType = "node"
-UNWIND other AS other_node
-RETURN {start: label, type: property, end: toString(other_node)} AS output
+CALL db.schema.visualization()
+YIELD nodes, relationships
+UNWIND relationships AS rel
+WITH rel, [node IN nodes WHERE id(node) = id(startNode(rel))][0] AS startNode,
+     [node IN nodes WHERE id(node) = id(endNode(rel))][0] AS endNode
+WITH labels(startNode)[0] AS startLabel, type(rel) AS relType, labels(endNode)[0] AS endLabel
+RETURN DISTINCT {start: startLabel, type: relType, end: endLabel} AS output
 """
 
 
