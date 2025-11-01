@@ -1,6 +1,6 @@
 requests
 pdfplumber
 neo4j
-openai==1.10.0
+openai>=1.50.0
 python-dotenv
 tiktoken
